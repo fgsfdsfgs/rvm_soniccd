@@ -12,7 +12,6 @@
 #include "GfxSurfaceDesc.h"
 #include "PaletteEntry.h"
 #include "DrawVertex.h"
-#include "DrawVertex3D.h"
 #include "Quad2D.h"
 #include "FileIO.h"
 #include "GifLoader.h"
@@ -23,6 +22,7 @@
 #define GRAPHIC_DATASIZE 0x200000
 #define VERTEX_LIMIT 0x2000
 #define INDEX_LIMIT 0xC000
+#define VERTEX3D_LIMIT 6404
 
 extern bool render3DEnabled;
 extern unsigned char fadeMode;
@@ -32,15 +32,16 @@ extern unsigned char fadeB;
 extern unsigned char fadeA;
 extern unsigned char paletteMode;
 extern unsigned char colourMode;
-extern unsigned short texBuffer[0x100000];
+extern unsigned short localTexBuffer[0x100000];
+extern unsigned short *texBuffer;
 extern unsigned char texBufferMode;
 extern unsigned char tileGfx[0x40000];
 extern unsigned char graphicData[GRAPHIC_DATASIZE];
 extern struct GfxSurfaceDesc gfxSurface[NUM_SPRITESHEETS];
 extern unsigned int gfxDataPosition;
-extern struct DrawVertex gfxPolyList[VERTEX_LIMIT];
-extern struct DrawVertex3D polyList3D[6404];
-extern unsigned short gfxPolyListIndex[INDEX_LIMIT];
+extern struct DrawBuffer gfxPolyList;
+extern struct DrawBuffer polyList3D;
+extern unsigned short *gfxPolyListIndex;
 extern unsigned short gfxVertexSize;
 extern unsigned short gfxVertexSizeOpaque;
 extern unsigned short gfxIndexSize;

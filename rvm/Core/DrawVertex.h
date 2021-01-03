@@ -7,7 +7,12 @@
 #define DrawVertex_h
 #include "SDL.h"
 
-// VITA: vgl*Pointer functions can't take float2, so we go with float3
+// VITA: vgl*Pointer functions can't take float2, so we go with float3 for position
+
+struct Vector2 {
+    float X;
+    float Y;
+};
 
 struct Vector3 {
     float X;
@@ -22,13 +27,11 @@ struct Color {
     uint8_t A;
 };
 
-struct DrawVertex {
-    struct Vector3 position;
-    struct Vector3 texCoord;
-    struct Color color;
+// VITA: use separate gpu-mapped buffers for each vertex attrib, eliminating stride
+struct DrawBuffer {
+    struct Vector3 *position;
+    struct Vector2 *texCoord;
+    struct Color *color;
 };
-
-#define VTX2D_STRIDE sizeof(struct DrawVertex)
-#define VTX2D_COUNT 3
 
 #endif /* DrawVertex_h */
