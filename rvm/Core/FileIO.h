@@ -10,9 +10,13 @@
 #include <stdbool.h>
 #include <string.h>
 #ifndef WINDOWS
-#include <unistd.h>
+# include <unistd.h>
 #else
-#define uint unsigned int
+# define uint unsigned int
+#endif
+#if defined(__VITA__)
+# include <sys/types.h>
+# include <dirent.h>
 #endif
 #include "StageList.h"
 #include "FileData.h"

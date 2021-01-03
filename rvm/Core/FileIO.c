@@ -5,6 +5,15 @@
 
 #include "FileIO.h"
 
+#define SAVE_GAME_FILE "SGame.bin"
+#define DATA_FILE "Data.rsdk"
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
+char fsBasePath[PATH_MAX];
+char fsSavePath[PATH_MAX];
+char fsDataPath[PATH_MAX];
 unsigned char fileBuffer[8192];
 uint32_t bufferPosition;
 uint32_t fileSize;
@@ -46,6 +55,33 @@ void Init_FileIO()
     useOldSdkLayout = false;
     vFileSize = 0u;
     virtualFileOffset = 0u;
+
+    // VITA: determine base path
+    const char *drives[] = { "uma0", "imc0", "ux0" };
+    const char *path = "/data/rvm_soniccd";
+    unsigned int i;
+    DIR *dir;
+    // check if a data folder exists on one of the drives
+    // default to the last one (ux0)
+    for (i = 0; i < sizeof(drives) / sizeof(*drives); ++i)
+    {
+      // leave one for the trailing /
+      snprintf(fsBasePath, sizeof(fsBasePath) - 1, "%s:%s", drives[i], path);
+      dir = opendir(fsBasePath);
+      if (dir)
+      {
+        closedir(dir);
+        break;
+      }
+    }
+    // try to create it in case it doesn't exist
+    sceIoMkdir(fsBasePath, 0766);
+    // add trailing slash
+    strncat(fsBasePath, "/", sizeof(fsBasePath) - 1);
+
+    // store file paths
+    snprintf(fsDataPath, sizeof(fsDataPath), "%s%s", fsBasePath, DATA_FILE);
+    snprintf(fsSavePath, sizeof(fsSavePath), "%s%s", fsBasePath, SAVE_GAME_FILE);
 }
 void FileIO_StrCopy(char* strA, int len_strA, char* strB, int len_strB)
 {
@@ -267,10 +303,10 @@ bool FileIO_ConvertStringToInteger(char* strA, int len_strA, int* sValue)
 bool FileIO_CheckRSDKFile()
 {
     struct FileData fData;
-    fileReader = fopen("Data.rsdk","rb");
+    fileReader = fopen(fsDataPath, "rb");
     if (fileReader == NULL)
     {
-        printf("Could not load Data.rsdk!\n");
+        printf("Could not load %s!\n", fsDataPath);
         useRSDKFile = false;
         useByteCode = false;
         return false;
@@ -318,10 +354,12 @@ bool FileIO_LoadFile(char* filePath, struct FileData *fData)
         i++;
     }
     //Start of code to handle files outside of Data.rsdk
+    char realPath[PATH_MAX] = { 0 };
+    snprintf(realPath, sizeof(realPath), "%s%s", fsBasePath, filePath);
 #if WINDOWS
-	if (_access(filePath, 0) != -1)
+	if (_access(realPath, 0) != -1)
 #else
-	if (access(filePath, F_OK) != -1)
+	if (access(realPath, F_OK) != -1)
 #endif
     {
         useRSDKFile = false;
@@ -330,7 +368,7 @@ bool FileIO_LoadFile(char* filePath, struct FileData *fData)
             fclose(fileReader);
             fileReader = NULL;
         }
-        fileReader = fopen(filePath, "rb");
+        fileReader = fopen(realPath, "rb");
         fseek(fileReader, 0L, SEEK_END);
         fileSize = (unsigned int)ftell(fileReader);
         rewind(fileReader);
@@ -351,7 +389,7 @@ bool FileIO_LoadFile(char* filePath, struct FileData *fData)
         fclose(fileReader);
         fileReader = NULL;
     }
-    fileReader = fopen("Data.rsdk","rb");
+    fileReader = fopen(fsDataPath, "rb");
     fseek(fileReader, 0L, SEEK_END);
     fileSize = (unsigned int)ftell(fileReader);
     rewind(fileReader);
@@ -891,7 +929,7 @@ void FileIO_SetFileInfo(struct FileData *fData)
             fclose(fileReader);
             fileReader = NULL;
         }
-        fileReader = fopen("Data.rsdk", "rb");
+        fileReader = fopen(fsDataPath, "rb");
         virtualFileOffset = fData->virtualFileOffset;
         vFileSize = fData->fileSize;
         
@@ -986,17 +1024,17 @@ bool FileIO_ReachedEndOfFile()
     }
     return (readPos - readSize + bufferPosition - virtualFileOffset) >= vFileSize;
 }
-const char* SAVE_GAME_FILE = "SGame.bin";
+
 uint8_t FileIO_ReadSaveRAMData()
 {
     //TODO: This should probably go into the appropriate platform specific directory instead.
 #if WINDOWS
-	if (_access(SAVE_GAME_FILE, 0) != -1)
+    if (_access(fsSavePath, 0) != -1)
 #else
-    if(access(SAVE_GAME_FILE, F_OK) != -1)
+    if (access(fsSavePath, F_OK) != -1)
 #endif
     {
-        FILE *sramReader = fopen(SAVE_GAME_FILE, "rb");
+        FILE *sramReader = fopen(fsSavePath, "rb");
         fseek(sramReader, 0, SEEK_SET);
         fread(saveRAM, 4, 8192, sramReader);
         fclose(sramReader);
@@ -1005,7 +1043,7 @@ uint8_t FileIO_ReadSaveRAMData()
 }
 uint8_t FileIO_WriteSaveRAMData()
 {
-    FILE* sramWriter = fopen(SAVE_GAME_FILE, "wb");
+    FILE* sramWriter = fopen(fsSavePath, "wb");
     fwrite(saveRAM, 4, 8192, sramWriter);
     fclose(sramWriter);
     return 1;

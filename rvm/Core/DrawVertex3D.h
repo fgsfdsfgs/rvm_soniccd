@@ -8,16 +8,15 @@
 
 #include "DrawVertex.h"
 
-struct Vector3 {
-    float X;
-    float Y;
-    float Z;
-};
+// VITA: Vector3 already defined in DrawVertex.h
 
 struct DrawVertex3D {
     struct Vector3 position;
-    struct Vector2 texCoord;
+    struct Vector3 texCoord;
     struct Color color;
 };
+
+#define VTX3D_STRIDE sizeof(struct DrawVertex3D)
+#define VTX3D_COUNT 3
 
 #endif /* DrawVertex3D_h */
