@@ -38,6 +38,31 @@ If you want to do another port or other changes open an issue so we can track ch
 ## Dreamcast
 - Don't. Code for Dreamcast will live in the Dreamcast branch, but the current branch is outdated. It required a working linux KOS setup. The build will be migrated to a docker container at some point.
 
+## PSVita
+- Obtain and install vitasdk and ensure the `VITASDK` env variable is set;
+- [Extract](https://samilops2.gitbook.io/vita-troubleshooting-guide/shader-compiler/extract-libshacccg.suprx) the runtime shader compiler on your Vita;
+- Obtain, build and install [this fork of vitaGL](https://github.com/fgsfdsfgs/vitaGL/tree/get_proc_address):
+```
+git clone --branch get_proc_address https://github.com/fgsfdsfgs/vitaGL.git vitaGL-fork
+cd vitaGL-fork
+make -j8 HAVE_SBRK=1 NO_DEBUG=1 HAVE_SHARK=1 HAVE_SHARK_FFP=1 install
+```
+- Obtain, build and install [this fork of SDL-Vita](https://github.com/fgsfdsfgs/SDL-Vita/tree/pib_gl):
+```
+git clone --branch pib_gl https://github.com/fgsfdsfgs/SDL-Vita.git SDL-Vita-fork
+cd SDL-Vita-fork
+make -f Makefile.vita -j8 ENABLE_VGL=1 install
+```
+- Build the port:
+```
+make -f Makefile.vita -j8
+```
+- Install `output.vpk`;
+- Put `Data.rsdk` into `ux0:/data/rvm_soniccd/`.
+
+The Vita port is still raw and destructive to the original codebase, so my apologies to the author for not posting an issue about it upstream.
+Maybe I'll do it later when it isn't this shitty.
+
 # Background
 This project began in 2013, when I learned that most Windows Phone 7 developers did not properly strip and obfuscate their builds. In a matter of hours I had the WP7 code decompiled and running on macOS with MonoGame. Other games took much longer to perform the same process back then, but the code for Sonic CD was very clean and easy to fix. I wanted to release an unofficial Mac port at that time, but porting the WP7 version at that time would bring undeserved attention to the obfuscation problem which affected a large number of games. That's because even if I properly obfuscated it, the fact that .NET was used would increase the chances of someone else looking into the original WP7 release.
 
